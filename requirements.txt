@@ -9,4 +9,3 @@ requests
 torch
 transformers
 python-multipart
-senetencepiece
