@@ -1,0 +1,5 @@
+.env
+lang_analyzer_200k_model/
+test_api.py
+lang_analyzer.db
+venv/

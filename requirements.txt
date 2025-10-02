@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+python-multipart
+python-jose
+passlib[argon2]
+python-dotenv
+transformers
+torch
+sentencepiece
