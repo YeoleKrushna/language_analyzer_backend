@@ -83,3 +83,12 @@ def get_profile(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+# At the very end of your main.py
+
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.environ.get("PORT", 8000))  # default 8000 for local dev
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)

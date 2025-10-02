@@ -6,7 +6,7 @@ import zipfile
 
 
 MODEL_PATH = "lang_analyzer_200k_model"
-MODEL_URL = "https://drive.google.com/uc?export=download&id=1wjed4uJDB0teY8lJZ5oy4c0yLQ4CL10O"  
+MODEL_URL = "https://github.com/YeoleKrushna/language_analyzer_backend/releases/download/v1/lang_analyzer_200k_model.zip"  
 
 # -----------------------------
 # Download & unzip model if missing
