@@ -1,8 +1,6 @@
 # Language Analyzer Backend
 
-`Language Analyzer Backend` is a FastAPI-based backend service for a Marathi language correction application. It combines a production-style REST API, user authentication, persistent history tracking, and transformer-powered text correction into a compact backend that is easy to deploy and extend.
-
-This project demonstrates practical backend engineering across API design, authentication, database modeling, ML model integration, and deployment readiness. From a recruiter or reviewer perspective, it shows the ability to move beyond a standalone model and wrap it in a usable product backend.
+This is the backend for my Marathi language correction project. I built it with FastAPI to handle user authentication, text correction requests, and history storage. It connects a transformer-based model with a simple API and database layer so the project works like a complete application instead of just a model demo.
 
 ## Project Highlights
 
@@ -13,7 +11,7 @@ This project demonstrates practical backend engineering across API design, authe
 - Stores user correction history in a relational database using `SQLAlchemy`.
 - Works locally with `SQLite` and can switch to production databases through `DATABASE_URL`.
 - Includes deployment configuration through a `Procfile` for cloud hosting platforms.
-- Positioned as an end-to-end backend project with deployment experience on an AWS instance.
+- Deployed on an AWS instance.
 - Automatically downloads the trained model artifact on first run if it is not already present.
 
 ## What This Backend Does
@@ -307,17 +305,13 @@ The backend is already designed with deployment-friendly patterns:
 
 ## AWS Deployment Experience
 
-This project can also be presented as an AWS-deployed backend application, which strengthens its value as a portfolio project beyond local development.
-
-Recruiter-facing deployment positioning:
+I deployed this backend on an AWS instance and used it as a hosted API instead of keeping it only on localhost.
 
 - deployed the FastAPI backend on an AWS instance,
 - configured the application to run as a hosted API service,
 - exposed the backend using host and port configuration suitable for real deployment,
 - managed application dependencies and runtime setup on a cloud environment,
 - demonstrated practical understanding of taking an ML-enabled backend from development to deployment.
-
-This is especially valuable because it shows familiarity not only with Python backend development, but also with cloud-hosted application delivery.
 
 ## Model Handling
 
@@ -330,8 +324,6 @@ Current behavior:
 - The ZIP is extracted locally and then loaded through `AutoTokenizer` and `AutoModelForSeq2SeqLM`.
 - Inference runs on `CUDA` if available, otherwise it falls back to `CPU`.
 
-This approach is useful for portfolio projects because it demonstrates awareness of model packaging and deployment, not only training or inference code.
-
 ## CORS Configuration
 
 The application currently allows requests from:
@@ -339,52 +331,4 @@ The application currently allows requests from:
 - `https://yourusername.github.io`
 - `http://localhost:5500`
 
-This suggests the backend is intended to connect to a browser-based frontend, including local static frontend testing and GitHub Pages hosting.
-
-## Why This Project Stands Out
-
-This backend is a strong portfolio piece because it combines several skills employers look for in early-career backend and ML-oriented engineers:
-
-- API development with a modern Python framework
-- secure authentication and password management
-- relational data modeling
-- practical machine learning integration
-- AWS deployment exposure and cloud-hosted backend execution
-- environment-based deployment configuration
-- product thinking through features like user history and profile management
-
-Instead of stopping at "I trained a model," this project shows the more valuable engineering step: turning ML capability into a usable application service.
-
-## Suggested Future Enhancements
-
-If you continue improving this project, strong next steps would be:
-
-- add automated tests for auth, history, and analysis routes,
-- move secrets and environment management to a dedicated `.env` workflow,
-- add rate limiting and request logging,
-- protect the generic `/history` and `/profile` routes more strictly,
-- add migration support with Alembic,
-- expose health-check and version endpoints,
-- containerize the app with Docker,
-- cache or preload the model more explicitly for cold-start optimization.
-
-## Resume-Friendly Summary
-
-You can describe this project in a resume or interview like this:
-
-> Built and deployed a FastAPI backend for a Marathi language correction platform on an AWS instance, with JWT authentication, SQLAlchemy-based persistence, and transformer-model inference using PyTorch and Hugging Face.
-
-## Verification Notes
-
-This README was written by reviewing the current source files in:
-
-- `app/main.py`
-- `app/auth.py`
-- `app/database.py`
-- `app/models.py`
-- `app/schemas.py`
-- `app/model_loader.py`
-- `requirements.txt`
-- `Procfile`
-
-The Python source files were also checked with a read-only syntax parse before documentation was finalized.
+This backend is intended to connect to a browser-based frontend, including local static frontend testing and GitHub Pages hosting.
