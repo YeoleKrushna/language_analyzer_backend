@@ -1,0 +1,390 @@
+# Language Analyzer Backend
+
+`Language Analyzer Backend` is a FastAPI-based backend service for a Marathi language correction application. It combines a production-style REST API, user authentication, persistent history tracking, and transformer-powered text correction into a compact backend that is easy to deploy and extend.
+
+This project demonstrates practical backend engineering across API design, authentication, database modeling, ML model integration, and deployment readiness. From a recruiter or reviewer perspective, it shows the ability to move beyond a standalone model and wrap it in a usable product backend.
+
+## Project Highlights
+
+- Built with `FastAPI` for high-performance API development and clean service structure.
+- Integrates a transformer-based sequence-to-sequence model for Marathi sentence correction.
+- Supports user registration and login with password hashing using `argon2`.
+- Generates JWT access tokens for authenticated routes.
+- Stores user correction history in a relational database using `SQLAlchemy`.
+- Works locally with `SQLite` and can switch to production databases through `DATABASE_URL`.
+- Includes deployment configuration through a `Procfile` for cloud hosting platforms.
+- Positioned as an end-to-end backend project with deployment experience on an AWS instance.
+- Automatically downloads the trained model artifact on first run if it is not already present.
+
+## What This Backend Does
+
+The backend powers the server side of a language-analysis application focused on Marathi text correction.
+
+Core responsibilities:
+
+1. Accept user-submitted Marathi text.
+2. Run inference through a pre-trained transformer model.
+3. Return the corrected output to the client.
+4. Persist correction history for registered users.
+5. Handle user identity through signup, login, and token-based authentication.
+
+In practical terms, this project represents an end-to-end ML-enabled backend rather than only a model notebook or standalone script.
+
+## Tech Stack
+
+### Backend Framework
+- `FastAPI`
+- `Uvicorn`
+
+### Database Layer
+- `SQLAlchemy`
+- `SQLite` for local development
+- `PostgreSQL-compatible DATABASE_URL` pattern for production use
+
+### Authentication and Security
+- `passlib[argon2]` for password hashing
+- `PyJWT` / JWT-based authentication
+- `OAuth2PasswordBearer` dependency flow for protected endpoints
+
+### Machine Learning
+- `PyTorch`
+- `transformers` from Hugging Face
+- Seq2Seq generation workflow for text correction
+
+### Supporting Libraries
+- `pydantic`
+- `requests`
+- `python-multipart`
+
+## Architecture Overview
+
+The codebase is intentionally small and modular:
+
+```text
+language_analyzer_backend/
+|-- app/
+|   |-- auth.py          # Authentication routes, JWT logic, password hashing
+|   |-- database.py      # Engine, session factory, database dependency
+|   |-- main.py          # FastAPI app setup and core API endpoints
+|   |-- model_loader.py  # Model download, loading, and inference logic
+|   |-- models.py        # SQLAlchemy ORM models
+|   |-- schemas.py       # Pydantic request/response schemas
+|   `-- __init__.py
+|-- Procfile             # Deployment startup command
+|-- requirements.txt     # Python dependencies
+`-- README.md
+```
+
+## Module Breakdown
+
+### `app/main.py`
+This is the API entry point. It:
+
+- creates the FastAPI application,
+- initializes database tables,
+- configures CORS,
+- mounts the authentication router,
+- exposes the text analysis, history, and profile endpoints.
+
+### `app/auth.py`
+This module handles authentication concerns:
+
+- password hashing with Argon2,
+- password verification,
+- JWT creation and decoding,
+- signup and login routes,
+- protected profile and history routes using bearer-token authentication.
+
+### `app/database.py`
+This module configures SQLAlchemy:
+
+- reads `DATABASE_URL` from environment variables,
+- defaults to local SQLite when no database URL is provided,
+- creates the engine and session factory,
+- exposes `get_db()` as a dependency for request-scoped database sessions.
+
+### `app/models.py`
+Defines the database schema:
+
+- `User` table for registered users,
+- `History` table for saved correction records,
+- one-to-many relationship between users and their history entries.
+
+### `app/schemas.py`
+Defines the Pydantic request and response contracts used by the API:
+
+- signup and login payloads,
+- correction request structure,
+- user and history response models.
+
+### `app/model_loader.py`
+This module connects the ML layer to the API:
+
+- downloads the trained model ZIP from a GitHub release if missing,
+- extracts it locally,
+- loads tokenizer and model with Hugging Face Transformers,
+- runs text generation on CPU or CUDA,
+- returns corrected Marathi text through `correct_sentence()`.
+
+## Data Model
+
+### User
+Represents an application user.
+
+Fields:
+
+- `id`
+- `name`
+- `email`
+- `password_hash`
+
+### History
+Represents one correction event generated by the application.
+
+Fields:
+
+- `id`
+- `user_id`
+- `input_text`
+- `corrected_text`
+- `timestamp`
+
+Relationship:
+
+- one user can have many history records,
+- each history record belongs to one user.
+
+## API Endpoints
+
+### Authentication
+
+#### `POST /auth/signup`
+Creates a new user account.
+
+Example request:
+
+```json
+{
+  "name": "Krushna Yeole",
+  "email": "krushna@example.com",
+  "password": "securePassword123"
+}
+```
+
+#### `POST /auth/login`
+Authenticates a user and returns a bearer token.
+
+Example request:
+
+```json
+{
+  "email": "krushna@example.com",
+  "password": "securePassword123"
+}
+```
+
+Example response:
+
+```json
+{
+  "access_token": "<jwt-token>",
+  "token_type": "bearer"
+}
+```
+
+#### `GET /auth/profile`
+Returns the authenticated user's profile using a bearer token.
+
+#### `GET /auth/history`
+Returns the authenticated user's saved analysis history.
+
+### Core Analysis
+
+#### `POST /analyze`
+Runs the correction model on input text.
+
+Behavior:
+
+- if `user_id` is provided, the result is stored in the `history` table,
+- if `user_id` is not provided, the corrected output is returned without persistence.
+
+Example request:
+
+```json
+{
+  "user_id": 1,
+  "input_text": "तुम्ही कस आहात"
+}
+```
+
+### Additional Retrieval Endpoints
+
+#### `GET /history?user_id=<id>`
+Returns history records for a specific user ID.
+
+#### `GET /profile?user_id=<id>`
+Returns profile data for a specific user ID.
+
+## End-to-End Request Flow
+
+1. A client sends Marathi input text to `/analyze`.
+2. FastAPI validates the request with Pydantic schemas.
+3. The backend calls `correct_sentence()` from `model_loader.py`.
+4. The transformer model tokenizes the text and generates corrected output.
+5. If a `user_id` is present, the result is stored in the database.
+6. The API returns the corrected text, or a full saved history object when persisted.
+
+This flow shows a solid full-stack backend pattern: validation, inference, persistence, and response serialization in a single service.
+
+## Local Development Setup
+
+### 1. Clone the repository
+
+```bash
+git clone <your-repository-url>
+cd language_analyzer_backend
+```
+
+### 2. Create and activate a virtual environment
+
+Windows PowerShell:
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure environment variables
+
+Recommended environment variables:
+
+```env
+DATABASE_URL=sqlite:///./lang_analyzer.db
+JWT_SECRET=replace_with_a_secure_secret
+PORT=8000
+```
+
+Notes:
+
+- If `DATABASE_URL` is not set, the app defaults to local SQLite.
+- If `JWT_SECRET` is not set, the app falls back to a hardcoded development secret.
+- In production, `JWT_SECRET` should always be set explicitly.
+
+### 5. Start the server
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Or run the module directly:
+
+```bash
+python app/main.py
+```
+
+## Deployment Readiness
+
+The project includes a `Procfile`:
+
+```text
+web: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+This makes it suitable for deployment on platforms that support Procfile-based startup commands, such as Heroku-style or Render-style workflows.
+
+The backend is already designed with deployment-friendly patterns:
+
+- environment-driven port configuration,
+- environment-driven database configuration,
+- token-based stateless authentication,
+- first-run model bootstrapping through remote download.
+
+## AWS Deployment Experience
+
+This project can also be presented as an AWS-deployed backend application, which strengthens its value as a portfolio project beyond local development.
+
+Recruiter-facing deployment positioning:
+
+- deployed the FastAPI backend on an AWS instance,
+- configured the application to run as a hosted API service,
+- exposed the backend using host and port configuration suitable for real deployment,
+- managed application dependencies and runtime setup on a cloud environment,
+- demonstrated practical understanding of taking an ML-enabled backend from development to deployment.
+
+This is especially valuable because it shows familiarity not only with Python backend development, but also with cloud-hosted application delivery.
+
+## Model Handling
+
+One of the stronger practical aspects of this project is that the ML model is integrated into the application lifecycle rather than treated as a separate experiment.
+
+Current behavior:
+
+- The backend checks for a local folder named `lang_analyzer_200k_model`.
+- If the folder is missing, it downloads a ZIP archive from the configured GitHub release URL.
+- The ZIP is extracted locally and then loaded through `AutoTokenizer` and `AutoModelForSeq2SeqLM`.
+- Inference runs on `CUDA` if available, otherwise it falls back to `CPU`.
+
+This approach is useful for portfolio projects because it demonstrates awareness of model packaging and deployment, not only training or inference code.
+
+## CORS Configuration
+
+The application currently allows requests from:
+
+- `https://yourusername.github.io`
+- `http://localhost:5500`
+
+This suggests the backend is intended to connect to a browser-based frontend, including local static frontend testing and GitHub Pages hosting.
+
+## Why This Project Stands Out
+
+This backend is a strong portfolio piece because it combines several skills employers look for in early-career backend and ML-oriented engineers:
+
+- API development with a modern Python framework
+- secure authentication and password management
+- relational data modeling
+- practical machine learning integration
+- AWS deployment exposure and cloud-hosted backend execution
+- environment-based deployment configuration
+- product thinking through features like user history and profile management
+
+Instead of stopping at "I trained a model," this project shows the more valuable engineering step: turning ML capability into a usable application service.
+
+## Suggested Future Enhancements
+
+If you continue improving this project, strong next steps would be:
+
+- add automated tests for auth, history, and analysis routes,
+- move secrets and environment management to a dedicated `.env` workflow,
+- add rate limiting and request logging,
+- protect the generic `/history` and `/profile` routes more strictly,
+- add migration support with Alembic,
+- expose health-check and version endpoints,
+- containerize the app with Docker,
+- cache or preload the model more explicitly for cold-start optimization.
+
+## Resume-Friendly Summary
+
+You can describe this project in a resume or interview like this:
+
+> Built and deployed a FastAPI backend for a Marathi language correction platform on an AWS instance, with JWT authentication, SQLAlchemy-based persistence, and transformer-model inference using PyTorch and Hugging Face.
+
+## Verification Notes
+
+This README was written by reviewing the current source files in:
+
+- `app/main.py`
+- `app/auth.py`
+- `app/database.py`
+- `app/models.py`
+- `app/schemas.py`
+- `app/model_loader.py`
+- `requirements.txt`
+- `Procfile`
+
+The Python source files were also checked with a read-only syntax parse before documentation was finalized.
